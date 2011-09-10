@@ -68,7 +68,7 @@ class PageGetter():
 
     def get_title(self, html):
         et = fromstring(html)
-        title = ex.xpath("./head/title") if et.xpath("./head/title") else 'notitle'
+        title = et.xpath("./head/title")[0].text if et.xpath("./head/title") else 'notitle'
         return title
 
     def error(self):
@@ -77,22 +77,22 @@ class PageGetter():
 class MainHandler(tornado.web.RequestHandler, PageGetter):
     def get(self):
         if self.request.remote_ip != '127.0.0.1':
-            self.write(json.dumps({ "status" : "error", "msg" : "invalid access" }))
+            self.write(json.dumps([{ "status" : "error", "msg" : "invalid access" }]))
             return
         url = self.get_argument('url', None)
         url_exp = re.compile(r'^http(s)?://')
         if not url:
-            self.write(json.dumps({ "status" : "error", "msg" : "url parameter is required" }))
+            self.write(json.dumps([{ "status" : "error", "msg" : "url parameter is required" }]))
             return             
         if not url_exp.match(url):
-            self.write(json.dumps({ "status" : "error", "msg" : "bad url expression" }))
+            self.write(json.dumps([{ "status" : "error", "msg" : "bad url expression" }]))
             return
         else:
             result = self.get_info(url)
             if result.status == "error":
-                self.write(json.dumps({ "status" : "error", "msg" : "API failed to get a title from this URL", "page" : {} }))
+                self.write(json.dumps([{ "status" : "error", "msg" : "API failed to get a title from this URL", "page" : {} }]))
             else:
-                self.write(json.dumps({ "status" : "success", "msg" : "", "page" : { "url" : url, "title" : result.title, "comment" : result.comment } }, ensure_ascii=False))
+                self.write(json.dumps([{ "status" : "success", "msg" : "", "page" : { "url" : url, "title" : result.title, "comment" : result.comment } }], ensure_ascii=False))
 
 def main():
     # daemon
